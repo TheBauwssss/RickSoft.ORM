@@ -25,7 +25,7 @@ namespace RickSoft.ORM.Engine
             get
             {
                 if (_instance == null)
-                    CreateInstance();
+                    throw new Exception("Please initialize the database first!");
 
                 return _instance;
             }
