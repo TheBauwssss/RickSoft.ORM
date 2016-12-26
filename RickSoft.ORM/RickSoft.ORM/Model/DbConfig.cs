@@ -13,6 +13,7 @@ namespace RickSoft.ORM.Engine.Model
         public abstract string Database { get; }
         public abstract string Username { get; }
         public abstract string Password { get; }
+        public abstract bool SafeMode { get; }
 
         public string ConnectionString
         {

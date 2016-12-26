@@ -270,6 +270,17 @@ namespace RickSoft.ORM.Engine.Controller
             return command;
         }
 
+        internal static string GenerateDropQuery<T>() where T : DatabaseObject, new()
+        {
+            T temp = new T();
+
+            string sql = $"DROP TABLE IF EXISTS {temp.TableName};";
+
+            logger.Trace("Generated query: " + sql);
+
+            return sql;
+        }
+
         internal static string GenerateUpdateQuery<T>() where T : DatabaseObject, new()
         {
             T temp = new T();

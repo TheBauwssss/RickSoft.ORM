@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RickSoft.ORM.Engine", "RickSoft.ORM\RickSoft.ORM.Engine.csproj", "{C8F539C9-EC84-40F6-AE4D-80D80682E466}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "..\Example\Example.csproj", "{BB8B6149-E1BE-49ED-8F55-1C5BD2EE2B16}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{C8F539C9-EC84-40F6-AE4D-80D80682E466}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8F539C9-EC84-40F6-AE4D-80D80682E466}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8F539C9-EC84-40F6-AE4D-80D80682E466}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB8B6149-E1BE-49ED-8F55-1C5BD2EE2B16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB8B6149-E1BE-49ED-8F55-1C5BD2EE2B16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB8B6149-E1BE-49ED-8F55-1C5BD2EE2B16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB8B6149-E1BE-49ED-8F55-1C5BD2EE2B16}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

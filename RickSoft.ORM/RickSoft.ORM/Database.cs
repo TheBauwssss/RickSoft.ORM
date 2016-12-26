@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using MySql.Data.MySqlClient;
@@ -19,6 +21,7 @@ namespace RickSoft.ORM.Engine
         #region Singleton
 
         private static Database _instance;
+        private static DbConfig _config;
         
         public static Database Instance
         {
@@ -35,6 +38,8 @@ namespace RickSoft.ORM.Engine
         {
             if (_instance != null)
                 return;
+
+            _config = config;
 
             _instance = new Database();
 
@@ -288,6 +293,24 @@ namespace RickSoft.ORM.Engine
             }
 
             logger.Trace("Object successfully inserted into database with id " + cmd.LastInsertedId + ".");
+        }
+
+        public static void Drop<T>() where T : DatabaseObject, new()
+        {
+            T temp = new T();
+
+            if (_config.SafeMode)
+            {
+                logger.Warn($"Unable to drop table {temp.TableName}, DROP TABLE not supported in safe mode!");
+                throw new NotSupportedException("Operation is not supported while running in safe mode!");
+            }
+
+            logger.Warn("DROP TABLE requested for " + temp.TableName);
+
+            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateDropQuery<T>(), Database.Instance.Connection);
+            cmd.ExecuteNonQuery();
+
+            logger.Info("Table dropped successfully");
         }
 
         public static void Update<T>(T obj) where T : DatabaseObject, new()

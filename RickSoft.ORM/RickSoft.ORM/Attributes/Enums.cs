@@ -24,7 +24,8 @@ namespace RickSoft.ORM.Engine.Attributes
     public enum ColumnOption
     {
         None = 0,
-        Unique = 1
+        Unique = 1,
+        NotNull = 2
     }
     
 }
