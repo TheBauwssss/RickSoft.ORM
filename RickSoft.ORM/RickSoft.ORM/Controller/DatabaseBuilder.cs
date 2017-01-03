@@ -106,6 +106,12 @@ namespace RickSoft.ORM.Engine.Controller
             if (typeName == typeof(byte[]).FullName)
                 return "MEDIUMBLOB";
 
+            if (typeName == typeof(bool).FullName)
+                return "TINYINT(1)";
+
+            //if (typeName == typeof(long).FullName)
+            //    return "TINYINT(1)";
+
             throw new InvalidDataException($"Type {typeName} not supported!");
             
         }
