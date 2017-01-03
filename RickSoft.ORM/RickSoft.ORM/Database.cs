@@ -148,7 +148,14 @@ namespace RickSoft.ORM.Engine
             foreach(var field in fields)
             {
                 logger.Trace($"Reading field {obj.TableName}.{field.Value.Column} from database");
-                field.Key.SetValue(obj, reader[field.Value.Column]);
+
+                var value = reader[field.Value.Column];
+
+                if (!reader.IsDBNull(reader.GetOrdinal(field.Value.Column)))
+                {
+                    field.Key.SetValue(obj, reader[field.Value.Column]);
+                }
+
             }
 
             logger.Trace("Object successfully read from database");
