@@ -103,6 +103,9 @@ namespace RickSoft.ORM.Engine.Controller
                 return "VARCHAR(255)";
             }
 
+            if (typeName == typeof(byte[]).FullName)
+                return "MEDIUMBLOB";
+
             throw new InvalidDataException($"Type {typeName} not supported!");
             
         }
