@@ -61,6 +61,8 @@
     <Compile Include="Database.cs" />
     <Compile Include="Model\DatabaseObject.cs" />
     <Compile Include="Model\DbConfig.cs" />
+    <Compile Include="Model\SqlOperator.cs" />
+    <Compile Include="Model\SqlWhereCondition.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

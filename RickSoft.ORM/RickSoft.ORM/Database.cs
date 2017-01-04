@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -79,6 +80,51 @@ namespace RickSoft.ORM.Engine
                 {
                     return Read<T>(reader);
                 }
+            }
+            finally
+            {
+                reader.Close();
+            }
+
+            return null;
+        }
+
+        public static List<T> Get<T>(Expression<Predicate<T>> selector) where T : DatabaseObject, new()
+        {
+            BinaryExpression op = (BinaryExpression)selector.Body;
+
+            ParameterExpression param = selector.Parameters[0];
+            
+            MemberExpression left = (MemberExpression)op.Left;
+            ConstantExpression right = (ConstantExpression)op.Right;
+
+            PropertyInfo prop = left.Member as PropertyInfo;
+
+            var enumerator = left.Member.GetCustomAttributes(typeof(DataFieldAttribute)).GetEnumerator();
+            enumerator.MoveNext();
+
+            var attr = enumerator.Current as DataFieldAttribute;
+
+            SqlWhereCondition condition = new SqlWhereCondition();
+            condition.Operator = QueryBuilder.GetSqlOperator(op.NodeType);
+            condition.Column = attr.Column;
+            condition.Value = right.Value;
+
+            //DataFieldAttribute attr = (DataFieldAttribute) left.Member.CustomAttributes[0];
+
+
+
+            //Console.WriteLine("Decomposed expression: {0} => {1} {2} {3}",
+            //          param.Name, left.Member.Name, operation.NodeType, right.Value);
+
+            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(condition), Database.Instance.Connection);
+            condition.BindValue(ref cmd);
+
+            MySqlDataReader reader = cmd.ExecuteReader();
+
+            try
+            {
+                return ReadAll<T>(reader);
             }
             finally
             {

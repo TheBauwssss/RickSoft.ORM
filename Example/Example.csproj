@@ -9,8 +9,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Example</RootNamespace>
     <AssemblyName>Example</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -56,7 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\RickSoft.ORM\RickSoft.ORM\RickSoft.ORM.Engine.csproj">
-      <Project>{C8F539C9-EC84-40F6-AE4D-80D80682E466}</Project>
+      <Project>{c8f539c9-ec84-40f6-ae4d-80d80682e466}</Project>
       <Name>RickSoft.ORM.Engine</Name>
     </ProjectReference>
   </ItemGroup>

@@ -27,6 +27,17 @@ namespace Example
 
             Database.Insert(ref user);
 
+            user = new User
+            {
+                Username = "User2",
+                Email = "nep2@nepper.com",
+                Password = "13123213213",
+                LastLogin = DateTime.Now.AddDays(4)
+            };
+
+            Database.Insert(ref user);
+
+            List<User> results = Database.Get<User>(u => u.Email == "nep@nepper.com");
             
 
             Console.ReadKey();

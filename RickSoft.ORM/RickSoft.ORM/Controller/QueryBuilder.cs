@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Text;
@@ -14,6 +15,53 @@ namespace RickSoft.ORM.Engine.Controller
     internal class QueryBuilder
     {
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
+        internal static SqlOperator GetSqlOperator(ExpressionType op)
+        {
+            SqlOperator value = new SqlOperator();
+
+            switch (op)
+            {
+                case ExpressionType.And:
+                    value.MainOperator = "AND";
+                    break;
+                case ExpressionType.AndAlso:
+                    value.MainOperator = "AND";
+                    break;
+                case ExpressionType.Equal:
+                    value.MainOperator = "=";
+                    break;
+                case ExpressionType.GreaterThan:
+                    value.MainOperator = ">";
+                    break;
+                case ExpressionType.GreaterThanOrEqual:
+                    value.MainOperator = ">=";
+                    break;
+                case ExpressionType.LessThan:
+                    value.MainOperator = "<";
+                    break;
+                case ExpressionType.LessThanOrEqual:
+                    value.MainOperator = ">=";
+                    break;
+                case ExpressionType.NotEqual:
+                    value.MainOperator = "=";
+                    value.Invert = true;
+                    break;
+                case ExpressionType.Or:
+                    value.MainOperator = "OR";
+                    break;
+                case ExpressionType.IsTrue:
+                    value.IsBoolean = true;
+                    break;
+                case ExpressionType.IsFalse:
+                    value.IsBoolean = true;
+                    value.Invert = true;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException($"Operator {nameof(op)} is not supported!", op, null);
+            }
+            return value;
+        }
 
         internal static string GenerateSelectQuery<T>(string whereField, object whereValue, bool honorSelectionOptions = false,
             int limit = -1) where T : DatabaseObject, new()
@@ -77,6 +125,16 @@ namespace RickSoft.ORM.Engine.Controller
             string command = $"SELECT * FROM {temp.TableName} {sqlWhere} {sqlOrderBy} {sqlLimit}".Trim() + ";";
 
             logger.Trace("Generated query: " + command);
+
+            return command;
+        }
+
+        internal static string GenerateSelectQuery<T>(SqlWhereCondition condition) where T : DatabaseObject, new()
+        {
+            T temp = new T();
+            string command = $"SELECT * FROM {temp.TableName} WHERE {condition.GenerateWhereClause()};";
+
+            logger.Trace("Generated conditional select query: " + command);
 
             return command;
         }
