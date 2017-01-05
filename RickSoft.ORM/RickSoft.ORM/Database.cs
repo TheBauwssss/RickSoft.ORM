@@ -242,46 +242,46 @@ namespace RickSoft.ORM.Engine
                     return;
                 }
             }
-            else if (obj.HasAttribute<DataFieldAttribute>())
-            {
-                var fields = obj.GetAllWithAttribute<DataFieldAttribute>();
+            //else if (obj.HasAttribute<DataFieldAttribute>())
+            //{
+            //    var fields = obj.GetAllWithAttribute<DataFieldAttribute>();
                 
-                foreach (var field in fields)
-                {
-                    if (field.Value.Options == ColumnOption.Unique)
-                    {
-                        //We have an unique constraint, check if this row already exists in the database
-                        object value = field.Key.GetValue(obj);
+            //    foreach (var field in fields)
+            //    {
+            //        if (field.Value.Options == ColumnOption.Unique)
+            //        {
+            //            //We have an unique constraint, check if this row already exists in the database
+            //            object value = field.Key.GetValue(obj);
 
-                        string select = QueryBuilder.GenerateSelectQuery<T>(field.Value.Column, value, false, 1);
+            //            string select = QueryBuilder.GenerateSelectQuery<T>(field.Value.Column, value, false, 1);
 
-                        MySqlCommand c = new MySqlCommand(select, Database.Instance.Connection);
+            //            MySqlCommand c = new MySqlCommand(select, Database.Instance.Connection);
 
-                        var reader = c.ExecuteReader();
+            //            var reader = c.ExecuteReader();
 
-                        var data = reader.Read();
+            //            var data = reader.Read();
 
-                        if (data)
-                        {
-                            T existingObject = DatabaseObject.Read<T>(reader);
+            //            if (data)
+            //            {
+            //                T existingObject = DatabaseObject.Read<T>(reader);
 
                             
 
-                            if (existingObject != null)
-                            {
-                                obj = existingObject;
-                                logger.Trace(
-                                    "Value marked with Unique constraint already exists in database, skipping requested insert");
-                                reader.Close();
-                                return;
-                            }
-                        }
+            //                if (existingObject != null)
+            //                {
+            //                    obj = existingObject;
+            //                    logger.Trace(
+            //                        "Value marked with Unique constraint already exists in database, skipping requested insert");
+            //                    reader.Close();
+            //                    return;
+            //                }
+            //            }
 
-                        reader.Close();
+            //            reader.Close();
 
-                    }
-                }
-            }
+            //        }
+            //    }
+            //}
 
 
             MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateInsertQuery<T>(), Database.Instance.Connection);
