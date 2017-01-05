@@ -162,6 +162,39 @@ namespace RickSoft.ORM.Engine
             return DatabaseObject.ReadAll<T>(reader);
         }
 
+        public static void InsertAll<T>(ref List<T> objs) where T : DatabaseObject, new()
+        {
+            int batchSize = 100;
+
+            T temp = new T();
+            if (temp.HasAttribute<DoNotDuplicateAttribute>())
+                throw new NotSupportedException("Bulk insert operations are not supported for complex objects.");
+
+            for (int i = 0; i < objs.Count; i += batchSize)
+            {
+                List<T> batch = new List<T>();
+
+                int size = batchSize;
+
+                if (i + batchSize > objs.Count)
+                    size = objs.Count - i;
+
+                batch.AddRange(objs.GetRange(i, size));
+
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateBulkInsertQuery<T>(batch.Count), Database.Instance.Connection);
+
+                for (int currentParam = 0; currentParam < batch.Count; currentParam++)
+                {
+                    CommandHelper.Bind(batch[currentParam], ref cmd, currentParam);
+                }
+
+                cmd.ExecuteNonQuery();
+
+                logger.Trace($"{batch.Count} objects successfully inserted into database.");
+
+            }
+        }
+
         public static void Insert<T>(ref T obj) where T : DatabaseObject, new()
         {
             if (obj.HasAttribute<DoNotDuplicateAttribute>())
@@ -242,48 +275,7 @@ namespace RickSoft.ORM.Engine
                     return;
                 }
             }
-            //else if (obj.HasAttribute<DataFieldAttribute>())
-            //{
-            //    var fields = obj.GetAllWithAttribute<DataFieldAttribute>();
-                
-            //    foreach (var field in fields)
-            //    {
-            //        if (field.Value.Options == ColumnOption.Unique)
-            //        {
-            //            //We have an unique constraint, check if this row already exists in the database
-            //            object value = field.Key.GetValue(obj);
-
-            //            string select = QueryBuilder.GenerateSelectQuery<T>(field.Value.Column, value, false, 1);
-
-            //            MySqlCommand c = new MySqlCommand(select, Database.Instance.Connection);
-
-            //            var reader = c.ExecuteReader();
-
-            //            var data = reader.Read();
-
-            //            if (data)
-            //            {
-            //                T existingObject = DatabaseObject.Read<T>(reader);
-
-                            
-
-            //                if (existingObject != null)
-            //                {
-            //                    obj = existingObject;
-            //                    logger.Trace(
-            //                        "Value marked with Unique constraint already exists in database, skipping requested insert");
-            //                    reader.Close();
-            //                    return;
-            //                }
-            //            }
-
-            //            reader.Close();
-
-            //        }
-            //    }
-            //}
-
-
+          
             MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateInsertQuery<T>(), Database.Instance.Connection);
             CommandHelper.Bind(obj, ref cmd);
             cmd.ExecuteNonQuery();

@@ -21,7 +21,8 @@ namespace RickSoft.ORM.Engine.Controller
         /// <typeparam name="T">type of object to bind</typeparam>
         /// <param name="dataObject">object to bind</param>
         /// <param name="command">command to bind to</param>
-        internal static void Bind<T>(T dataObject, ref MySqlCommand command) where T : DatabaseObject, new()
+        /// <param name="index">the parameter index to bind to</param>
+        internal static void Bind<T>(T dataObject, ref MySqlCommand command, int index = -1) where T : DatabaseObject, new()
         {
             PropertyInfo[] props = typeof(T).GetProperties();
             foreach (PropertyInfo prop in props)
@@ -32,8 +33,12 @@ namespace RickSoft.ORM.Engine.Controller
                     DataFieldAttribute dataAttr = attr as DataFieldAttribute;
                     if (dataAttr != null && !dataAttr.IsPrimaryKey)
                     {
-                        logger.Trace("Binding value for " + dataAttr.Column + " to SQL command");
-                        command.Parameters.AddWithValue("@" + dataAttr.Column, prop.GetValue(dataObject, null));
+                        if (index >= 0)
+                            logger.Trace("Binding value for " + dataAttr.Column + " with parameter index " + index + " to SQL command");
+                        else
+                            logger.Trace("Binding value for " + dataAttr.Column + " to SQL command");
+
+                        command.Parameters.AddWithValue("@" + dataAttr.Column + (index >= 0 ? index.ToString() : ""), prop.GetValue(dataObject, null));
                     }
                 }
             }

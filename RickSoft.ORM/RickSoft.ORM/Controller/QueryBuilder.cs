@@ -328,6 +328,54 @@ namespace RickSoft.ORM.Engine.Controller
             return command;
         }
 
+        internal static string GenerateBulkInsertQuery<T>(int numberOfObjects) where T : DatabaseObject, new()
+        {
+            T temp = new T();
+
+            string fields = "";
+            string parameters = "";
+            List<string> parameterList = new List<string>();
+
+            //Bind fields
+            PropertyInfo[] props = typeof(T).GetProperties();
+            foreach (PropertyInfo prop in props)
+            {
+                object[] attrs = prop.GetCustomAttributes(true);
+                foreach (object attr in attrs)
+                {
+                    DataFieldAttribute dataAttr = attr as DataFieldAttribute;
+                    if (dataAttr != null && !dataAttr.IsPrimaryKey)
+                    {
+                        logger.Trace("Binding insert field for " + temp.TableName + "." + dataAttr.Column + " to SQL command");
+                        fields += " " + dataAttr.Column + ",";
+                        parameterList.Add($"@{dataAttr.Column}");
+                    }
+                }
+            }
+
+            for (int i = 0; i < numberOfObjects; i++)
+            {
+                string t = "(";
+
+                foreach (string param in parameterList)
+                    t += $"{param}{i},";
+
+                t = t.Substring(0, t.Length - 1); //remove last comma
+                
+                t += "),";
+                parameters += t;
+            }
+
+            //Remove first and last characters
+            fields = fields.Substring(1, fields.Length - 2);
+            parameters = parameters.Substring(0, parameters.Length - 1);
+
+            string command = $"INSERT INTO {temp.TableName} ({fields}) VALUES{parameters};";
+            logger.Trace("Generated query: " + command);
+
+            return command;
+        }
+
         internal static string GenerateDropQuery<T>() where T : DatabaseObject, new()
         {
             T temp = new T();

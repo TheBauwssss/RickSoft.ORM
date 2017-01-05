@@ -80,7 +80,10 @@ namespace Tests
         [TestMethod]
         public void Benchmark()
         {
-            int num = 100;
+            //reset db
+            DatabaseBuilder.Create(new User(), true);
+
+            int num = 250;
 
             int percent = 0;
 
@@ -108,6 +111,35 @@ namespace Tests
 
             Console.WriteLine("Benchmarking single insertions...");
             Console.WriteLine($"Benchmark complete, {num} insertions in {s.ElapsedMilliseconds}ms, avg {speed}ms per insertion");
+
+            DatabaseBuilder.Create(new User(), true);
+
+            num = 1000;
+
+            s.Restart();
+            List<User> users = new List<User>();
+            for (int i = 0; i < num; i++)
+            {
+                User u = new User();
+                u.Email = $"{i}@domain.com";
+                u.Username = $"User{i}";
+                u.LastLogin = DateTime.Now.AddDays(-5);
+                u.LastLogin = u.LastLogin.Round(TimeSpan.FromSeconds(1));
+                u.Password = $"Password{i}";
+                
+                users.Add(u);
+            }
+
+            Console.WriteLine("Benchmarking bulk insertion...");
+            Database.InsertAll(ref users);
+            s.Stop();
+            speed = s.ElapsedMilliseconds/num;
+            Console.WriteLine($"Benchmark complete, {num} insertions in {s.ElapsedMilliseconds}ms, avg {speed}ms per insertion");
+
+
+            
+
+
         }
     }
 }

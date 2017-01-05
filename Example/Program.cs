@@ -43,6 +43,30 @@ namespace Example
 
             obj = Database.Get<User>(u => u.Id == id);
 
+
+
+            int num = 160;
+
+
+            List<User> users = new List<User>();
+            for (int i = 5; i < num; i++)
+            {
+                User u = new User();
+                u.Email = $"{i}@domain.com";
+                u.Username = $"User{i}";
+                u.LastLogin = DateTime.Now.AddDays(-i);
+                u.Password = $"Password{i}";
+                
+                users.Add(u);
+            }
+
+            Database.InsertAll(ref users);
+
+
+
+
+
+
             Console.ReadKey();
         }
     }
