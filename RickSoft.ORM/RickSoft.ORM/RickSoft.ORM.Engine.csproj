@@ -57,6 +57,7 @@
     <Compile Include="Attributes\SelectOptionAttribute.cs" />
     <Compile Include="Controller\CommandHelper.cs" />
     <Compile Include="Controller\DatabaseBuilder.cs" />
+    <Compile Include="Controller\LinqHelper.cs" />
     <Compile Include="Controller\QueryBuilder.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="Model\DatabaseObject.cs" />

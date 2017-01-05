@@ -13,7 +13,7 @@ namespace RickSoft.ORM.Engine.Model
         public SqlOperator Operator { get; set; }
         public string Column { get; set; }
         public object Value { get; set; }
-
+        
         public void BindValue(ref MySqlCommand command)
         {
             command.Parameters.AddWithValue("@" + Column, Value);

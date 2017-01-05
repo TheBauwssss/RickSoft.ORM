@@ -37,8 +37,11 @@ namespace Example
 
             Database.Insert(ref user);
 
-            List<User> results = Database.Get<User>(u => u.Email == "nep@nepper.com");
-            
+            User obj = Database.Get<User>(u => u.Email == "nep@nepper.com");
+
+            int id = 1;
+
+            obj = Database.Get<User>(u => u.Id == id);
 
             Console.ReadKey();
         }

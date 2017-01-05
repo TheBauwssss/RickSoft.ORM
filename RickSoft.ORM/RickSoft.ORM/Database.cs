@@ -78,7 +78,7 @@ namespace RickSoft.ORM.Engine
             {
                 while (reader.Read())
                 {
-                    return Read<T>(reader);
+                    return DatabaseObject.Read<T>(reader);
                 }
             }
             finally
@@ -89,49 +89,45 @@ namespace RickSoft.ORM.Engine
             return null;
         }
 
-        public static List<T> Get<T>(Expression<Predicate<T>> selector) where T : DatabaseObject, new()
+        public static T Get<T>(Expression<Predicate<T>> selector) where T : DatabaseObject, new()
         {
-            BinaryExpression op = (BinaryExpression)selector.Body;
+            var expression = LinqHelper.ParseLinqExpression(selector);
 
-            ParameterExpression param = selector.Parameters[0];
-            
-            MemberExpression left = (MemberExpression)op.Left;
-            ConstantExpression right = (ConstantExpression)op.Right;
-
-            PropertyInfo prop = left.Member as PropertyInfo;
-
-            var enumerator = left.Member.GetCustomAttributes(typeof(DataFieldAttribute)).GetEnumerator();
-            enumerator.MoveNext();
-
-            var attr = enumerator.Current as DataFieldAttribute;
-
-            SqlWhereCondition condition = new SqlWhereCondition();
-            condition.Operator = QueryBuilder.GetSqlOperator(op.NodeType);
-            condition.Column = attr.Column;
-            condition.Value = right.Value;
-
-            //DataFieldAttribute attr = (DataFieldAttribute) left.Member.CustomAttributes[0];
-
-
-
-            //Console.WriteLine("Decomposed expression: {0} => {1} {2} {3}",
-            //          param.Name, left.Member.Name, operation.NodeType, right.Value);
-
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(condition), Database.Instance.Connection);
-            condition.BindValue(ref cmd);
+            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(expression), Database.Instance.Connection);
+            expression.BindValue(ref cmd);
 
             MySqlDataReader reader = cmd.ExecuteReader();
-
+            
             try
             {
-                return ReadAll<T>(reader);
+                if (reader.Read())
+                    return DatabaseObject.Read<T>(reader);
             }
             finally
             {
                 reader.Close();
             }
 
-            return null;
+            return null; //No results
+        }
+
+        public static List<T> GetAll<T>(Expression<Predicate<T>> selector) where T : DatabaseObject, new()
+        {
+            var expression = LinqHelper.ParseLinqExpression(selector);
+
+            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(expression), Database.Instance.Connection);
+            expression.BindValue(ref cmd);
+
+            MySqlDataReader reader = cmd.ExecuteReader();
+
+            try
+            {
+                return DatabaseObject.ReadAll<T>(reader);
+            }
+            finally
+            {
+                reader.Close();
+            }
         }
 
         internal static List<T> GetAll<T>(string whereField, int whereId, bool order = false, int limit = -1) where T : DatabaseObject, new()
@@ -139,7 +135,7 @@ namespace RickSoft.ORM.Engine
             MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(whereField, whereId, order, limit), Database.Instance.Connection);
             MySqlDataReader reader = cmd.ExecuteReader();
 
-            return ReadAll<T>(reader);
+            return DatabaseObject.ReadAll<T>(reader);
         }
 
         public static List<T> GetAll<T>(DatabaseObject parent, bool order = false, int limit = -1) where T : DatabaseObject, new()
@@ -147,7 +143,7 @@ namespace RickSoft.ORM.Engine
             MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(parent, order, limit), Database.Instance.Connection);
             MySqlDataReader reader = cmd.ExecuteReader();
 
-            return ReadAll<T>(reader);
+            return DatabaseObject.ReadAll<T>(reader);
         }
 
         public static List<T> GetAll<T>() where T : DatabaseObject, new()
@@ -155,7 +151,7 @@ namespace RickSoft.ORM.Engine
             MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(), Database.Instance.Connection);
             MySqlDataReader reader = cmd.ExecuteReader();
 
-            return ReadAll<T>(reader);
+            return DatabaseObject.ReadAll<T>(reader);
         }
 
         public static List<T> GetAll<T>(bool order = false, int limit = -1) where T : DatabaseObject, new()
@@ -163,50 +159,7 @@ namespace RickSoft.ORM.Engine
             MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(-1, order, limit), Database.Instance.Connection);
             MySqlDataReader reader = cmd.ExecuteReader();
 
-            return ReadAll<T>(reader);
-        }
-
-        public static List<T> ReadAll<T>(MySqlDataReader reader) where T : DatabaseObject, new()
-        {
-            List<T> objects = new List<T>();
-
-            try
-            {
-                while (reader.Read())
-                {
-                    objects.Add(Read<T>(reader));
-                }
-            }
-            finally
-            {
-                reader.Close();
-            }
-
-            return objects;
-        }
-
-        public static T Read<T>(MySqlDataReader reader) where T : DatabaseObject, new()
-        {
-            T obj = new T();
-
-            var fields = obj.GetAllWithAttribute<DataFieldAttribute>();
-
-            foreach(var field in fields)
-            {
-                logger.Trace($"Reading field {obj.TableName}.{field.Value.Column} from database");
-
-                var value = reader[field.Value.Column];
-
-                if (!reader.IsDBNull(reader.GetOrdinal(field.Value.Column)))
-                {
-                    field.Key.SetValue(obj, reader[field.Value.Column]);
-                }
-
-            }
-
-            logger.Trace("Object successfully read from database");
-            
-            return obj;
+            return DatabaseObject.ReadAll<T>(reader);
         }
 
         public static void Insert<T>(ref T obj) where T : DatabaseObject, new()
@@ -310,7 +263,7 @@ namespace RickSoft.ORM.Engine
 
                         if (data)
                         {
-                            T existingObject = Read<T>(reader);
+                            T existingObject = DatabaseObject.Read<T>(reader);
 
                             
 

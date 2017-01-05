@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using MySql.Data.MySqlClient;
 using NLog;
 using RickSoft.ORM.Engine.Attributes;
 
@@ -119,6 +120,35 @@ namespace RickSoft.ORM.Engine.Model
             }
         }
 
+        #region Comparison functions
+
+        public bool Equals(DatabaseObject other)
+        {
+            if (this.GetType() != other.GetType())
+                throw new NotSupportedException("A data instance can only be compared against another instance of the same type!");
+
+            //Get all properties with DataField attributes
+            var props = GetAllWithAttribute<DataFieldAttribute>();
+
+            foreach (PropertyInfo key in props.Keys)
+            {
+                var val1 = key.GetValue(this, null);
+                var val2 = key.GetValue(other, null);
+
+                if (!Equals(val1, val2))
+                {
+                    logger.Trace($"Object comparison failed on {key.Name}");
+
+                    return false;
+                }
+
+            }
+
+            logger.Trace($"Object comparison success. All fields marked with DataField have the same value");
+
+            return true;
+        }
+
         public bool CompareTo(DatabaseObject other)
         {
             if (this.GetType() != other.GetType())
@@ -140,7 +170,7 @@ namespace RickSoft.ORM.Engine.Model
                         var val2 = prop.GetValue(other, null);
 
                         //This field has a DoNotDuplicate attribute
-                        if (!object.Equals(val1, val2))
+                        if (!Equals(val1, val2))
                         {
                             logger.Trace($"Object comparison failed on {prop.Name}");
 
@@ -156,5 +186,53 @@ namespace RickSoft.ORM.Engine.Model
 
         }
 
+        #endregion
+
+        #region Datareader functions
+        internal static List<T> ReadAll<T>(MySqlDataReader reader) where T : DatabaseObject, new()
+        {
+            List<T> objects = new List<T>();
+
+            try
+            {
+                while (reader.Read())
+                {
+                    objects.Add(Read<T>(reader));
+                }
+            }
+            finally
+            {
+                reader.Close();
+            }
+
+            return objects;
+        }
+
+        internal static T Read<T>(MySqlDataReader reader) where T : DatabaseObject, new()
+        {
+            T obj = new T();
+
+            var fields = obj.GetAllWithAttribute<DataFieldAttribute>();
+
+            foreach(var field in fields)
+            {
+                logger.Trace($"Reading field {obj.TableName}.{field.Value.Column} from database");
+
+                var value = reader[field.Value.Column];
+
+                if (!reader.IsDBNull(reader.GetOrdinal(field.Value.Column)))
+                {
+                    field.Key.SetValue(obj, reader[field.Value.Column]);
+                }
+
+            }
+
+            logger.Trace("Object successfully read from database");
+            
+            return obj;
+        }
+        #endregion
+
+        
     }
 }
