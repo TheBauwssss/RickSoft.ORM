@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Linq.Expressions;
@@ -22,7 +23,7 @@ namespace RickSoft.ORM.Engine
         #region Singleton
 
         private static Database _instance;
-        private static DbConfig _config;
+        internal static DbConfig Config { get; set; }
         
         public static Database Instance
         {
@@ -40,50 +41,34 @@ namespace RickSoft.ORM.Engine
             if (_instance != null)
                 return;
 
-            _config = config;
+            Config = config;
 
             _instance = new Database();
 
-            _instance.Connection = new MySqlConnection(config.ConnectionString);
-
-            try
-            {
-                logger.Trace("Opening connection...");
-
-                _instance.Connection.Open();
-
-                logger.Info("Database connection successful");
-            }
-            catch (Exception ex)
-            {
-
-                logger.Fatal(ex, "Error in database connection");
-
-                throw;
-            }
         }
 
         #endregion
-
-        public MySqlConnection Connection { get; private set; }
 
         #region Functions
 
         public static T Get<T>(int id) where T : DatabaseObject, new()
         {
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(id, false, 1), Database.Instance.Connection);
-            MySqlDataReader reader = cmd.ExecuteReader();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
-            try
-            {
-                while (reader.Read())
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(id, false, 1), connection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                try
                 {
-                    return DatabaseObject.Read<T>(reader);
+                    while (reader.Read())
+                        return DatabaseObject.Read<T>(reader);
                 }
-            }
-            finally
-            {
-                reader.Close();
+                finally
+                {
+                    reader.Close();
+                }
             }
 
             return null;
@@ -93,19 +78,24 @@ namespace RickSoft.ORM.Engine
         {
             var expression = LinqHelper.ParseLinqExpression(selector);
 
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(expression), Database.Instance.Connection);
-            expression.BindValue(ref cmd);
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
-            MySqlDataReader reader = cmd.ExecuteReader();
-            
-            try
-            {
-                if (reader.Read())
-                    return DatabaseObject.Read<T>(reader);
-            }
-            finally
-            {
-                reader.Close();
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(expression), connection);
+                expression.BindValue(ref cmd);
+
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                try
+                {
+                    if (reader.Read())
+                        return DatabaseObject.Read<T>(reader);
+                }
+                finally
+                {
+                    reader.Close();
+                }
             }
 
             return null; //No results
@@ -115,51 +105,77 @@ namespace RickSoft.ORM.Engine
         {
             var expression = LinqHelper.ParseLinqExpression(selector);
 
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(expression), Database.Instance.Connection);
-            expression.BindValue(ref cmd);
-
-            MySqlDataReader reader = cmd.ExecuteReader();
-
-            try
+            using (var connection = new MySqlConnection(Config.ConnectionString))
             {
-                return DatabaseObject.ReadAll<T>(reader);
-            }
-            finally
-            {
-                reader.Close();
+                connection.Open();
+
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(expression), connection);
+                expression.BindValue(ref cmd);
+
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                try
+                {
+                    return DatabaseObject.ReadAll<T>(reader);
+                }
+                finally
+                {
+                    reader.Close();
+                }
             }
         }
 
         internal static List<T> GetAll<T>(string whereField, int whereId, bool order = false, int limit = -1) where T : DatabaseObject, new()
         {
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(whereField, whereId, order, limit), Database.Instance.Connection);
-            MySqlDataReader reader = cmd.ExecuteReader();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
-            return DatabaseObject.ReadAll<T>(reader);
+                MySqlCommand cmd =
+                    new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(whereField, whereId, order, limit), connection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                return DatabaseObject.ReadAll<T>(reader);
+            }
         }
 
         public static List<T> GetAll<T>(DatabaseObject parent, bool order = false, int limit = -1) where T : DatabaseObject, new()
         {
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(parent, order, limit), Database.Instance.Connection);
-            MySqlDataReader reader = cmd.ExecuteReader();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
-            return DatabaseObject.ReadAll<T>(reader);
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(parent, order, limit), connection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                return DatabaseObject.ReadAll<T>(reader);
+            }
         }
 
         public static List<T> GetAll<T>() where T : DatabaseObject, new()
         {
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(), Database.Instance.Connection);
-            MySqlDataReader reader = cmd.ExecuteReader();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
-            return DatabaseObject.ReadAll<T>(reader);
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(), connection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                return DatabaseObject.ReadAll<T>(reader);
+            }
         }
 
         public static List<T> GetAll<T>(bool order = false, int limit = -1) where T : DatabaseObject, new()
         {
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(-1, order, limit), Database.Instance.Connection);
-            MySqlDataReader reader = cmd.ExecuteReader();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
-            return DatabaseObject.ReadAll<T>(reader);
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateSelectQuery<T>(-1, order, limit), connection);
+                MySqlDataReader reader = cmd.ExecuteReader();
+
+                return DatabaseObject.ReadAll<T>(reader);
+            }
         }
 
         public static void InsertAll<T>(ref List<T> objs) where T : DatabaseObject, new()
@@ -181,14 +197,19 @@ namespace RickSoft.ORM.Engine
 
                 batch.AddRange(objs.GetRange(i, size));
 
-                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateBulkInsertQuery<T>(batch.Count), Database.Instance.Connection);
-
-                for (int currentParam = 0; currentParam < batch.Count; currentParam++)
+                using (var connection = new MySqlConnection(Config.ConnectionString))
                 {
-                    CommandHelper.Bind(batch[currentParam], ref cmd, currentParam);
-                }
+                    connection.Open();
 
-                cmd.ExecuteNonQuery();
+                    MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateBulkInsertQuery<T>(batch.Count), connection);
+
+                    for (int currentParam = 0; currentParam < batch.Count; currentParam++)
+                    {
+                        CommandHelper.Bind(batch[currentParam], ref cmd, currentParam);
+                    }
+
+                    cmd.ExecuteNonQuery();
+                }
 
                 logger.Trace($"{batch.Count} objects successfully inserted into database.");
 
@@ -275,29 +296,35 @@ namespace RickSoft.ORM.Engine
                     return;
                 }
             }
-          
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateInsertQuery<T>(), Database.Instance.Connection);
-            CommandHelper.Bind(obj, ref cmd);
-            cmd.ExecuteNonQuery();
 
-            foreach (var field in obj.GetAllWithAttribute<DataFieldAttribute>())
+            using (var connection = new MySqlConnection(Config.ConnectionString))
             {
-                if (field.Value.IsPrimaryKey)
-                {
-                    logger.Trace("Binding insert id for " + field.Value.Column + "to inserted object");
-                    field.Key.SetValue(obj, (int)cmd.LastInsertedId);
-                    break;
-                }
-            }
+                connection.Open();
 
-            logger.Trace("Object successfully inserted into database with id " + cmd.LastInsertedId + ".");
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateInsertQuery<T>(), connection);
+                CommandHelper.Bind(obj, ref cmd);
+                cmd.ExecuteNonQuery();
+            
+
+                foreach (var field in obj.GetAllWithAttribute<DataFieldAttribute>())
+                {
+                    if (field.Value.IsPrimaryKey)
+                    {
+                        logger.Trace("Binding insert id for " + field.Value.Column + "to inserted object");
+                        field.Key.SetValue(obj, (int)cmd.LastInsertedId);
+                        break;
+                    }
+                }
+
+                logger.Trace("Object successfully inserted into database with id " + cmd.LastInsertedId + ".");
+            }
         }
 
         public static void Drop<T>() where T : DatabaseObject, new()
         {
             T temp = new T();
 
-            if (_config.SafeMode)
+            if (Config.SafeMode)
             {
                 logger.Warn($"Unable to drop table {temp.TableName}, DROP TABLE not supported in safe mode!");
                 throw new NotSupportedException("Operation is not supported while running in safe mode!");
@@ -305,19 +332,28 @@ namespace RickSoft.ORM.Engine
 
             logger.Warn("DROP TABLE requested for " + temp.TableName);
 
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateDropQuery<T>(), Database.Instance.Connection);
-            cmd.ExecuteNonQuery();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
+
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateDropQuery<T>(), connection);
+                cmd.ExecuteNonQuery();
+            }
 
             logger.Info("Table dropped successfully");
         }
 
         public static void Update<T>(T obj) where T : DatabaseObject, new()
         {
-            MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateUpdateQuery<T>(), Database.Instance.Connection);
-            CommandHelper.Bind(obj, ref cmd);
-            CommandHelper.BindUpdateId(obj, ref cmd);
-            cmd.ExecuteNonQuery();
+            using (var connection = new MySqlConnection(Config.ConnectionString))
+            {
+                connection.Open();
 
+                MySqlCommand cmd = new MySqlCommand(QueryBuilder.GenerateUpdateQuery<T>(), connection);
+                CommandHelper.Bind(obj, ref cmd);
+                CommandHelper.BindUpdateId(obj, ref cmd);
+                cmd.ExecuteNonQuery();
+            }
             logger.Trace("Object successfully updated");
         }
 

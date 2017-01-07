@@ -72,8 +72,13 @@ namespace RickSoft.ORM.Engine.Controller
 
             logger.Trace("Generated query: " + sql);
 
-            MySqlCommand cmd = new MySqlCommand(sql, Database.Instance.Connection);
-            cmd.ExecuteNonQuery();
+            using (var connection = new MySqlConnection(Database.Config.ConnectionString))
+            {
+                connection.Open();
+
+                MySqlCommand cmd = new MySqlCommand(sql, connection);
+                cmd.ExecuteNonQuery();
+            }
 
             logger.Info($"Table {tableName} created successfully.");
 

@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>RICK-SOFT.ORM</id>
-    <version>0.1.5</version>
+    <version>0.1.6</version>
     <title>$title$</title>
     <authors>RICK-SOFT</authors>
     <owners>RICK-SOFT</owners>
@@ -11,7 +11,7 @@
     <iconUrl>http://none</iconUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Simple ORM engine.</description>
-    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
+    <releaseNotes>Added connection pooling</releaseNotes>
     <copyright>Copyright © 2017</copyright>
     <tags>ORM</tags>
   </metadata>

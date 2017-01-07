@@ -63,9 +63,16 @@ namespace Example
             Database.InsertAll(ref users);
 
 
+            string sql = ";DROP user;--";
 
+            var fdsfsdfs = Database.Get<User>(u => u.Username == sql);
 
-
+            User moeder = new User();
+            moeder.Username = sql;
+            moeder.Email = sql;
+            moeder.Password = sql;
+            moeder.LastLogin = DateTime.Now;
+            Database.Insert(ref moeder);
 
             Console.ReadKey();
         }
